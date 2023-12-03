@@ -201,7 +201,7 @@ if api_key_openai:
 
           # st.json(data)
           # new_data=json(data)
-          st.subheader('Assessment & Recomendation')
+          st.subheader('Assessment & Recommendation')
           # print(type(new_data))
           print("--------------------------------------------------")
           # Run the Streamlit app (uncomment the line below to run the app directly with this script)
