@@ -62,16 +62,12 @@ Output JSON Structure:
 Output:
 
 """
+
+if "text_show" not in st.session_state:
+    st.session_state.text_show = ""
+
 if 'button_clicked' not in st.session_state:
     st.session_state.button_clicked = False
-
-api_key_openai = st.sidebar.text_input("Enter your OpenAI API key",type="password")
-if api_key_openai:
-    openai.api_key = api_key_openai
-    os.environ['OPENAI_API_KEY'] = api_key_openai
-
-client = openai
-
 
 if "start_chat" not in st.session_state:
     st.session_state.start_chat = False
@@ -135,86 +131,94 @@ def format_loan_advisory_system_info(data):
     formatted_text = "\n".join(output)
     return formatted_text
 
-
-import streamlit as st
-import json
-
-# Initialize variables
-client_data = {}
-loan_application_data = {}
-loan_approval_data = []
-
-# Streamlit app layout
 st.title('Using AI to provide digital advice on personal loans to consumers')
 
-# Client Data Collection
-st.subheader('Client Data')
-client_data['status'] = st.selectbox('Marital Status', ['Single', 'Married', 'Divorced', 'Widowed'])
-client_data['credit_score'] = st.text_input('Credit Score')
-client_data['residency_status'] = st.selectbox('Residency Status', ['Citizen', 'Permanent Resident', 'Non-Resident'])
-client_data['housing_situation'] = st.selectbox('Housing Situation', ['Homeowner', 'Renting', 'Living with Family'])
-client_data['monthly_income'] = st.text_input('Monthly Income')
+api_key_openai = st.sidebar.text_input("Enter your OpenAI API key",type="password")
+if api_key_openai:
+    openai.api_key = api_key_openai
+    os.environ['OPENAI_API_KEY'] = api_key_openai
 
-# Loan Application Data
-st.subheader('Loan Application Data')
-loan_application_data['loan_amount_requested'] = st.text_input('Loan Amount Requested')
-loan_application_data['loan_term'] = st.text_input('Loan Term')
-loan_application_data['payment_frequency'] = st.selectbox('Payment Frequency', ['Week', 'Fortnight', 'Month', 'Year'])
-loan_application_data['loan_purpose'] = st.text_input('Loan Purpose')
-loan_application_data['additional_notes'] = st.text_area('Additional Notes')
+    client = openai
+    # Initialize variables
+    client_data = {}
+    loan_application_data = {}
+    loan_approval_data = []
 
-# Loan Approval Data
-st.subheader('Loan Approval Data')
-number_of_approvals = st.number_input('Number of Loan Approvals', min_value=1, max_value=2, value=1)
+    # Streamlit app layout
 
-for i in range(int(number_of_approvals)):
-    st.markdown(f'### Loan Approval {i + 1}')
-    loan_approval_data.append({
-        'approved_loan_amount': st.text_input('Approved Loan Amount', key=f'approved_loan_amount_{i}'),
-        'approved_interest_rate': st.text_input('Approved Interest Rate', key=f'approved_interest_rate_{i}'),
-        'approved_loan_term': st.text_input('Approved Loan Term', key=f'approved_loan_term_{i}'),
-        'approved_repayment_amount': st.text_input('Approved Repayment Amount', key=f'approved_repayment_amount_{i}'),
-        'repayment_frequency': st.selectbox('Repayment Frequency', ['Week', 'Fortnight', 'Month', 'Year'], key=f'repayment_frequency_{i}'),
-        'loan_conditions': st.text_area('Loan Conditions', key=f'loan_conditions_{i}')
-    })
-st.subheader('Response length')
-st.session_state.res_len =st.text_input('Word count')
+    # Client Data Collection
+    st.subheader('Client Data')
+    client_data['status'] = st.selectbox('Marital Status', ['Single', 'Married', 'Divorced', 'Widowed'])
+    client_data['credit_score'] = st.text_input('Credit Score')
+    client_data['residency_status'] = st.selectbox('Residency Status', ['Citizen', 'Permanent Resident', 'Non-Resident'])
+    client_data['housing_situation'] = st.selectbox('Housing Situation', ['Homeowner', 'Renting', 'Living with Family'])
+    client_data['monthly_income'] = st.text_input('Monthly Income')
+
+    # Loan Application Data
+    st.subheader('Loan Application Data')
+    loan_application_data['loan_amount_requested'] = st.text_input('Loan Amount Requested')
+    loan_application_data['loan_term'] = st.text_input('Loan Term')
+    loan_application_data['payment_frequency'] = st.selectbox('Payment Frequency', ['Week', 'Fortnight', 'Month', 'Year'])
+    loan_application_data['loan_purpose'] = st.text_input('Loan Purpose')
+    loan_application_data['additional_notes'] = st.text_area('Additional Notes')
+
+    # Loan Approval Data
+    st.subheader('Loan Approval Data')
+    number_of_approvals = st.number_input('Number of Loan Approvals', min_value=1, max_value=2, value=1)
+
+    for i in range(int(number_of_approvals)):
+        st.markdown(f'### Loan Approval {i + 1}')
+        loan_approval_data.append({
+            'approved_loan_amount': st.text_input('Approved Loan Amount', key=f'approved_loan_amount_{i}'),
+            'approved_interest_rate': st.text_input('Approved Interest Rate', key=f'approved_interest_rate_{i}'),
+            'approved_loan_term': st.text_input('Approved Loan Term', key=f'approved_loan_term_{i}'),
+            'approved_repayment_amount': st.text_input('Approved Repayment Amount', key=f'approved_repayment_amount_{i}'),
+            'repayment_frequency': st.selectbox('Repayment Frequency', ['Week', 'Fortnight', 'Month', 'Year'], key=f'repayment_frequency_{i}'),
+            'loan_conditions': st.text_area('Loan Conditions', key=f'loan_conditions_{i}')
+        })
+    st.subheader('Response length')
+    st.session_state.res_len =st.text_input('Word count')
 
 
 
-   
-# Submit button
-if st.button('Submit'):
-    with st.spinner('Generating...'):
-    # Compile data into the specified JSON format
-      data = {
-          "client_data_collection": {
-              "form_fields": client_data
-          },
-          "loan_application_data": {
-              "form_fields": loan_application_data
-          },
-          "loan_approval_data": {
-              "approvals": loan_approval_data
+      
+    # Submit button
+    if st.button('Submit'):
+        with st.spinner('Generating...'):
+        # Compile data into the specified JSON format
+          data = {
+              "client_data_collection": {
+                  "form_fields": client_data
+              },
+              "loan_application_data": {
+                  "form_fields": loan_application_data
+              },
+              "loan_approval_data": {
+                  "approvals": loan_approval_data
+              }
           }
-      }
-      print("--------------------------------------------------")
+          print("--------------------------------------------------")
 
-      # st.json(data)
-      # new_data=json(data)
-      st.subheader('Assessment & Recomendation')
-      # print(type(new_data))
-      print("--------------------------------------------------")
-      # Run the Streamlit app (uncomment the line below to run the app directly with this script)
-      # st._main_run_cl()
-      formatted_text = format_loan_advisory_system_info(data)
-      final_prompt=prompt_1.format(st.session_state.res_len)+formatted_text+prompt_2
-      # st.write(final_prompt)
-      out=get_response_from_openai(final_prompt)
-      st.write("-----------------------------")
+          # st.json(data)
+          # new_data=json(data)
+          st.subheader('Assessment & Recomendation')
+          # print(type(new_data))
+          print("--------------------------------------------------")
+          # Run the Streamlit app (uncomment the line below to run the app directly with this script)
+          # st._main_run_cl()
+          formatted_text = format_loan_advisory_system_info(data)
+          final_prompt=prompt_1.format(st.session_state.res_len)+formatted_text+prompt_2
+          # st.write(final_prompt)
+          out=get_response_from_openai(final_prompt)
+          st.write("-----------------------------")
+          try:
+          # st.write(out)
+            fin=json.loads(out)
+            st.session_state.button_clicked = False
 
-      # st.write(out)
-      fin=json.loads(out)
-      st.session_state.button_clicked = False
+            st.json(fin)
+          except:
+            st.write(out)   
 
-      st.json(fin)
+else:
+   st.write("Upload Your OpenAI API Key To Proceed.")            
