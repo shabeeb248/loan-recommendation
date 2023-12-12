@@ -20,11 +20,23 @@ Instructions:
   - Your analysis should strictly adhere to the information presented in the given inputs.
   - That where the loan approval is more than they applied for they should think carefully before accepting the higher amount and consider if needed.
   - That a lower interest rate or lower payments are always beneficial that clients wish to pay less interest overall, but sometime cashflow is important
-  - That with debt consolidation we cannot always consolidate all debts, that sometimes it doesn’t make sense to consolidate debts with lower interest rates. But CHatGPT will review what is and isn’t being consolidate and calculate if the client is better off.
+  - That with debt consolidation we cannot always consolidate all debts, that sometimes it doesn't make sense to consolidate debts with lower interest rates. But CHatGPT will review what is and isn’t being consolidate and calculate if the client is better off.
   - Where we are taking security that the client understand there is a risk of losing that security if repayments are not maintained
   - That the client should be comfortable wit the repayments and have reviewed their budgets carefully and not be aware of any major changes to their financial situation before taking out a personal loan.
   - The output must be presented in the specified output JSON format provided below.
   - Ensure that there is no additional text or content before or after the output outher than the json.
+  - Ensure that the advice is based solely on the data provided in the client's application, without incorporating any additional, external data.
+  - The language used in the advice should be clear, concise, and easily understandable, avoiding any complex financial jargon.
+  - Always refer to loan options as "loan offers" and not as "portfolio."
+  - Explicitly discuss the differences and implications of choosing secured versus unsecured loans.
+  - Include information that interest rates range from 9.95% to 29.95%, with an average rate of 18%, and relate this to the client's credit score, noting that the average credit score in NZ is 600.
+  - Use terminology like "Lender" which can include banks, finance companies, or credit unions.
+  - Advise that clients can increase their payments at any time to reduce interest.
+  - Explain that a single approval, especially with a higher interest rate, might reflect a cautious credit profile, potentially due to other lenders declining the application.
+  - Ensure the advice does not incorrectly associate the total loan cost (including interest) as being higher than the requested loan amount. Clarify that interest is a standard addition to the requested amount.
+  - Focus on the affordability of the loan repayments, emphasizing that clients should be comfortable with the payments. Avoid making assumptions about the client's expenses, living costs, or other financial commitments.
+  - Aim for a more positive tone in the advice while still highlighting essential risks. Encourage clients to be mindful of their budget and borrow only what they need.
+
 
 
 Input Data:
@@ -131,6 +143,15 @@ def format_loan_advisory_system_info(data):
     formatted_text = "\n".join(output)
     return formatted_text
 
+def remove_null_or_empty_keys(in_data):
+    if isinstance(in_data, dict):
+        return {k: remove_null_or_empty_keys(v) for k, v in in_data.items() if v not in [None, ""]}
+    elif isinstance(in_data, list):
+        return [remove_null_or_empty_keys(v) for v in in_data if v not in [None, ""]]
+    else:
+        return in_data
+    
+
 st.title('Using AI to provide digital advice on personal loans to consumers')
 
 api_key_openai = st.sidebar.text_input("Enter your OpenAI API key",type="password")
@@ -148,17 +169,17 @@ if api_key_openai:
 
     # Client Data Collection
     st.subheader('Client Data')
-    client_data['status'] = st.selectbox('Marital Status', ['Single', 'Married', 'Divorced', 'Widowed'])
+    client_data['status'] = st.selectbox('Marital Status', ["",'Single', 'Married', 'Divorced', 'Widowed'])
     client_data['credit_score'] = st.text_input('Credit Score')
-    client_data['residency_status'] = st.selectbox('Residency Status', ['Citizen', 'Permanent Resident', 'Non-Resident'])
-    client_data['housing_situation'] = st.selectbox('Housing Situation', ['Homeowner', 'Renting', 'Living with Family'])
+    client_data['residency_status'] = st.selectbox('Residency Status', ["",'Citizen', 'Permanent Resident', 'Non-Resident'])
+    client_data['housing_situation'] = st.selectbox('Housing Situation', ["",'Homeowner', 'Renting', 'Living with Family'])
     client_data['monthly_income'] = st.text_input('Monthly Income')
 
     # Loan Application Data
     st.subheader('Loan Application Data')
     loan_application_data['loan_amount_requested'] = st.text_input('Loan Amount Requested')
     loan_application_data['loan_term'] = st.text_input('Loan Term')
-    loan_application_data['payment_frequency'] = st.selectbox('Payment Frequency', ['Week', 'Fortnight', 'Month', 'Year'])
+    loan_application_data['payment_frequency'] = st.selectbox('Payment Frequency', ["",'Week', 'Fortnight', 'Month', 'Year'])
     loan_application_data['loan_purpose'] = st.text_input('Loan Purpose')
     loan_application_data['additional_notes'] = st.text_area('Additional Notes')
 
@@ -173,14 +194,17 @@ if api_key_openai:
             'approved_interest_rate': st.text_input('Approved Interest Rate', key=f'approved_interest_rate_{i}'),
             'approved_loan_term': st.text_input('Approved Loan Term', key=f'approved_loan_term_{i}'),
             'approved_repayment_amount': st.text_input('Approved Repayment Amount', key=f'approved_repayment_amount_{i}'),
-            'repayment_frequency': st.selectbox('Repayment Frequency', ['Week', 'Fortnight', 'Month', 'Year'], key=f'repayment_frequency_{i}'),
+            'repayment_frequency': st.selectbox('Repayment Frequency', ["",'Week', 'Fortnight', 'Month', 'Year'], key=f'repayment_frequency_{i}'),
             'loan_conditions': st.text_area('Loan Conditions', key=f'loan_conditions_{i}')
         })
-    st.subheader('Response length')
-    st.session_state.res_len =st.text_input('Word count')
 
+    if number_of_approvals == 1:
+         st.session_state.res_len ="250"
 
-
+    if number_of_approvals == 2:
+          st.session_state.res_len ="350"
+    
+  
       
     # Submit button
     if st.button('Submit'):
@@ -198,15 +222,15 @@ if api_key_openai:
               }
           }
           print("--------------------------------------------------")
-
+          data_new=remove_null_or_empty_keys(data)
           # st.json(data)
           # new_data=json(data)
           st.subheader('Assessment & Recommendation')
-          # print(type(new_data))
+          print(data_new)
           print("--------------------------------------------------")
           # Run the Streamlit app (uncomment the line below to run the app directly with this script)
           # st._main_run_cl()
-          formatted_text = format_loan_advisory_system_info(data)
+          formatted_text = format_loan_advisory_system_info(data_new)
           final_prompt=prompt_1.format(st.session_state.res_len)+formatted_text+prompt_2
           # st.write(final_prompt)
           out=get_response_from_openai(final_prompt)
